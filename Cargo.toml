@@ -6,18 +6,6 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
-bevy = { version = "0.17", features = ["png"], default-features=false }
-bevy_common_assets = { version = "0.14", features = ["json", "ron", "toml"] }
-bevy_dioxus_sync = "0.1.0"
-dioxus = { version = "0.7.1", features = ["default"] }
-dioxus-logger = "0.7"
-dioxus-native = { version = "0.7", features = ["default"] }
-# the bellow iyes_progress dep causes the compilation of stylo@0.8.0 to fail for unknown reasons.
-# iyes_progress = { version = "0.15", features = ["assets", "async", "debug"] }
-rustc-hash = { version = "2.1.1", features = ["nightly"] }
-serde = { version = "1.0.228", features = ["derive"] }
-
 [features]
 default = ["desktop", "bevy/default"]
 web = ["dioxus/web"]
@@ -78,3 +66,20 @@ headless_ci = [
 	"bevy/x11",
 	"bevy/zstd_rust",
 ]
+
+[dependencies]
+bevy = { version = "0.17", features = ["png"], default-features=false }
+bevy_common_assets = { version = "0.14", features = ["json", "ron", "toml"] }
+bevy_dioxus_sync = "0.1.0"
+dioxus = { version = "0.7.1", features = ["default"] }
+dioxus-logger = "0.7"
+dioxus-native = { version = "0.7", features = ["default"] }
+# the bellow iyes_progress dep causes the compilation of stylo@0.8.0 to fail for unknown reasons.
+# iyes_progress = { version = "0.15", features = ["assets", "async", "debug"] }
+rustc-hash = { version = "2.1.1", features = ["nightly"] }
+serde = { version = "1.0.228", features = ["derive"] }
+
+
+[profile.dev.package.wgpu-types]
+debug-assertions = false
+
