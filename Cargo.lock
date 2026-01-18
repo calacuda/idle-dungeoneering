@@ -1141,8 +1141,7 @@ dependencies = [
 [[package]]
 name = "bevy_dioxus_hooks"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac182ee2d2163bb4ad2af6ec9cc238dd39688dffdfc15ff01bf2339e80e2ca81"
+source = "git+https://github.com/rydb/bevy_dioxus_sync#653724f82fb535f9abd73822e30d102858754e08"
 dependencies = [
  "async-std",
  "bevy_app",
@@ -1164,14 +1163,14 @@ dependencies = [
 [[package]]
 name = "bevy_dioxus_interop"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5df1e0d4f3b051b6767bfbabe8f0237b4ecb1c17fa8fb37fe63d928fe3a29a0f"
+source = "git+https://github.com/rydb/bevy_dioxus_sync#653724f82fb535f9abd73822e30d102858754e08"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
  "bevy_log",
  "bytemuck",
  "crossbeam-channel",
+ "dioxus-native-dom",
  "dioxus-signals",
  "tokio",
 ]
@@ -1179,11 +1178,11 @@ dependencies = [
 [[package]]
 name = "bevy_dioxus_messages"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9579ccdbcfe7329db6b292bb8664abf8123285743698e879a327a886b4bee9b"
+source = "git+https://github.com/rydb/bevy_dioxus_sync#653724f82fb535f9abd73822e30d102858754e08"
 dependencies = [
  "bevy_app",
  "bevy_asset",
+ "bevy_dioxus_interop",
  "bevy_dioxus_render",
  "bevy_ecs",
  "bevy_image",
@@ -1203,8 +1202,7 @@ dependencies = [
 [[package]]
 name = "bevy_dioxus_render"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1af361b7fa8f0f131b392c415e266a9a33ce26c2ad407d703718da4e1652921a"
+source = "git+https://github.com/rydb/bevy_dioxus_sync#653724f82fb535f9abd73822e30d102858754e08"
 dependencies = [
  "anyrender_vello",
  "bevy_app",
@@ -1212,6 +1210,7 @@ dependencies = [
  "bevy_camera",
  "bevy_core_pipeline",
  "bevy_derive",
+ "bevy_dioxus_interop",
  "bevy_ecs",
  "bevy_image",
  "bevy_log",
@@ -1237,8 +1236,7 @@ dependencies = [
 [[package]]
 name = "bevy_dioxus_sync"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca053c6583d1087f47dca37697d4f55c0226744f1ff0f19366925c1e45c5c84b"
+source = "git+https://github.com/rydb/bevy_dioxus_sync#653724f82fb535f9abd73822e30d102858754e08"
 dependencies = [
  "async-std",
  "bevy_app",
@@ -5674,6 +5672,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_common_assets",
+ "bevy_dioxus_hooks",
  "bevy_dioxus_sync",
  "dioxus",
  "dioxus-logger",

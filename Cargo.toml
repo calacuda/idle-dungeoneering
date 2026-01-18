@@ -70,7 +70,8 @@ headless_ci = [
 [dependencies]
 bevy = { version = "0.17", features = ["png"], default-features=false }
 bevy_common_assets = { version = "0.14", features = ["json", "ron", "toml"] }
-bevy_dioxus_sync = "0.1.0"
+bevy_dioxus_hooks = { git = "https://github.com/rydb/bevy_dioxus_sync", version = "0.1.0" }
+bevy_dioxus_sync = { git = "https://github.com/rydb/bevy_dioxus_sync", version = "0.1.0" }
 dioxus = { version = "0.7.1", features = ["default"] }
 dioxus-logger = "0.7"
 dioxus-native = { version = "0.7", features = ["default"] }
