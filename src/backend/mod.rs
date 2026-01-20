@@ -5,6 +5,7 @@ use bevy::prelude::{Deref, DerefMut};
 
 pub mod base_plugin;
 pub mod bevy_scene_plugin;
+pub mod idle_time_plugin;
 pub mod sphere;
 
 #[derive(Resource, Debug, Clone, PartialEq, Deref, DerefMut)]
