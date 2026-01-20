@@ -1,10 +1,14 @@
 use std::time::{Duration, Instant};
 
-use bevy::{input::keyboard::KeyboardInput, prelude::*, window::WindowFocused};
+use bevy::{
+    input::{keyboard::KeyboardInput, mouse::MouseButtonInput},
+    prelude::*,
+    window::WindowFocused,
+};
 
 use crate::backend::{CurrentIdleTimeSeconds, LongestIdleTimeSeconds};
 
-pub const TIME_WINDOW: f64 = 0.25;
+pub const TIME_WINDOW: f64 = 1.0;
 pub const IDLE_TIME_GROWTH_RATE: f64 = 1.75;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, States)]
@@ -33,8 +37,8 @@ pub struct KeyPress(pub Instant);
 pub struct LostFocusTimestamp(pub Instant);
 
 /// a function to asertain if teh game should step the loaded automation
-pub fn should_automate(idle_time: Res<CurrentIdleTimeSeconds>) -> bool {
-    **idle_time > 0.0
+pub fn should_automate(idle_time: Res<CurrentIdleTimeSeconds>, key_count: Res<KeyCount>) -> bool {
+    **idle_time > 0.0 && key_count.0 == 0
 }
 
 fn automation_timer_done(last_lost_focus: Single<Option<&LostFocusTimestamp>>) -> bool {
@@ -53,7 +57,8 @@ impl Plugin for BasePlugin {
             Update,
             (
                 (
-                    gather_input.run_if(on_message::<KeyboardInput>),
+                    gather_kbd_input.run_if(on_message::<KeyboardInput>),
+                    // gather_mouse_input.run_if(on_message::<MouseButtonInput>),
                     step_inputs,
                     step_idle_time,
                 )
@@ -67,11 +72,17 @@ impl Plugin for BasePlugin {
     }
 }
 
-fn gather_input(mut cmds: Commands, mut keyboard_inputs: MessageReader<KeyboardInput>) {
+fn gather_kbd_input(mut cmds: Commands, mut keyboard_inputs: MessageReader<KeyboardInput>) {
     for _input in keyboard_inputs.read() {
         cmds.spawn(KeyPress(Instant::now()));
     }
 }
+
+// fn gather_mouse_input(mut cmds: Commands, mut keyboard_inputs: MessageReader<MouseButtonInput>) {
+//     for _input in keyboard_inputs.read() {
+//         cmds.spawn(KeyPress(Instant::now()));
+//     }
+// }
 
 fn step_inputs(
     mut cmds: Commands,
@@ -100,7 +111,7 @@ fn step_idle_time(
 ) {
     if key_count.0 > 0 {
         let input_rate = key_count.0 as f64 * TIME_WINDOW;
-        let increment_amount = input_rate * IDLE_TIME_GROWTH_RATE * time.delta_secs_f64();
+        let increment_amount = input_rate * time.delta_secs_f64();
 
         **idle_time += increment_amount;
 
