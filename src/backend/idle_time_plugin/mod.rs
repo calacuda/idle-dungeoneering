@@ -1,0 +1,187 @@
+use std::time::{Duration, Instant};
+
+use bevy::{
+    input::keyboard::KeyboardInput, prelude::*, time::common_conditions::on_timer,
+    window::WindowFocused,
+};
+
+use crate::backend::{
+    CurrentIdleTimeSeconds, LongestIdleTimeSeconds, base_plugin::AutomationStates,
+};
+
+pub const TIME_WINDOW: f64 = 1.0;
+pub const IDLE_TIME_GROWTH_RATE: f64 = 1.25;
+pub const IDLE_SAMPLE_WINDOW: Duration = Duration::from_mins(30);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Resource)]
+pub struct KeyCount(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Component)]
+pub struct KeyPress(pub Instant);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Component)]
+pub struct LostFocusTimestamp(pub Instant);
+
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Component)]
+pub struct IdleTimeSamples {
+    pub when: Instant,
+    pub time: f64,
+}
+
+impl IdleTimeSamples {
+    pub fn new(time: f64) -> Self {
+        Self {
+            when: Instant::now(),
+            time,
+        }
+    }
+}
+
+/// a function to asertain if teh game should step the loaded automation
+pub fn should_automate(idle_time: Res<CurrentIdleTimeSeconds>, key_count: Res<KeyCount>) -> bool {
+    **idle_time > 0.0 && key_count.0 == 0
+}
+
+fn automation_timer_done(last_lost_focus: Single<Option<&LostFocusTimestamp>>) -> bool {
+    last_lost_focus
+        .is_some_and(|focus_timer| focus_timer.0.elapsed() > Duration::from_secs_f64(2.0))
+}
+
+pub struct IdleTimePlugin;
+
+impl Plugin for IdleTimePlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<KeyCount>();
+        app.add_systems(
+            Update,
+            (
+                (
+                    gather_kbd_input.run_if(on_message::<KeyboardInput>),
+                    // gather_mouse_input.run_if(on_message::<MouseButtonInput>),
+                    step_inputs,
+                    step_idle_time,
+                )
+                    .chain(),
+                step_automating_timer,
+                start_automating
+                    .run_if(in_state(AutomationStates::Manual))
+                    .run_if(automation_timer_done),
+                (collect_idle_time_data, clean_idle_time_data)
+                    .run_if(on_timer(Duration::from_secs_f64(0.25))),
+            ),
+        );
+    }
+}
+
+fn gather_kbd_input(mut cmds: Commands, mut keyboard_inputs: MessageReader<KeyboardInput>) {
+    for _input in keyboard_inputs.read() {
+        cmds.spawn(KeyPress(Instant::now()));
+    }
+}
+
+fn step_inputs(
+    mut cmds: Commands,
+    presses: Query<(Entity, &KeyPress)>,
+    mut key_count: ResMut<KeyCount>,
+) {
+    let mut presses: Vec<(Entity, &KeyPress)> = presses.into_iter().collect();
+    presses.retain(|(entity, press)| {
+        let is_old = press.0.elapsed() >= Duration::from_secs_f64(TIME_WINDOW);
+
+        if is_old {
+            cmds.entity(*entity).despawn();
+        }
+
+        !is_old
+    });
+
+    key_count.0 = presses.len();
+}
+
+fn step_idle_time(
+    key_count: Res<KeyCount>,
+    mut idle_time: ResMut<CurrentIdleTimeSeconds>,
+    mut longest_idle_time: ResMut<LongestIdleTimeSeconds>,
+    presses: Query<&KeyPress>,
+    time: Res<Time>,
+) {
+    if key_count.0 > 0 {
+        // let input_rate = key_count.0 as f64 * TIME_WINDOW;
+        // let increment_amount = input_rate * time.delta_secs_f64();
+        let mut presses: Vec<&KeyPress> = presses
+            .iter()
+            .sort_by::<&KeyPress>(|val1, val2| {
+                val1.0
+                    .elapsed()
+                    .as_secs_f64()
+                    .total_cmp(&val2.0.elapsed().as_secs_f64())
+            })
+            .collect();
+        let now = KeyPress(Instant::now());
+        presses.push(&now);
+        let total_time_delta: Duration = presses
+            .windows(2)
+            .map(|presses| presses[0].0 - presses[1].0)
+            .sum();
+        let total_time_delta = total_time_delta.as_secs_f64();
+        let avg_press_time_delta = total_time_delta / presses.len() as f64;
+
+        // if avg_press_time_delta > 0.0 {
+        let avg_press_time_delta = 1.0 - avg_press_time_delta;
+        let input_rate = avg_press_time_delta;
+        // let compensater = 10.0;
+        let increment_amount = input_rate * IDLE_TIME_GROWTH_RATE * time.delta_secs_f64();
+
+        **idle_time += increment_amount;
+
+        if **idle_time > **longest_idle_time {
+            **longest_idle_time = **idle_time;
+        }
+        // }
+    } else {
+        let decrement_amount = time.delta_secs_f64();
+
+        **idle_time -= decrement_amount;
+
+        if **idle_time < 0.0 {
+            **idle_time = 0.0;
+        }
+    }
+}
+
+fn step_automating_timer(
+    mut cmds: Commands,
+    mut events: MessageReader<WindowFocused>,
+    last_lost_focus: Single<Option<(Entity, &LostFocusTimestamp)>>,
+) {
+    for event in events.read() {
+        if !event.focused && last_lost_focus.is_none() {
+            cmds.spawn(LostFocusTimestamp(Instant::now()));
+        } else if let Some((entity, _lost_focus)) = *last_lost_focus
+            && !event.focused
+        {
+            cmds.spawn(LostFocusTimestamp(Instant::now()));
+            cmds.entity(entity).despawn();
+        } else if let Some((entity, _lost_focus)) = *last_lost_focus
+            && event.focused
+        {
+            cmds.entity(entity).despawn();
+        }
+    }
+}
+
+fn start_automating(mut automation_state: ResMut<NextState<AutomationStates>>) {
+    automation_state.set(AutomationStates::Automation);
+}
+
+fn collect_idle_time_data(mut cmds: Commands, idle_time: Res<CurrentIdleTimeSeconds>) {
+    cmds.spawn(IdleTimeSamples::new(idle_time.0));
+}
+
+fn clean_idle_time_data(mut cmds: Commands, data: Query<(Entity, &IdleTimeSamples)>) {
+    for (entity, time) in data {
+        if time.when.elapsed() > IDLE_SAMPLE_WINDOW {
+            cmds.entity(entity).despawn();
+        }
+    }
+}
