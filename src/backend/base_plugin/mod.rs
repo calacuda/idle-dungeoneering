@@ -9,7 +9,7 @@ use bevy::{
 use crate::backend::{CurrentIdleTimeSeconds, LongestIdleTimeSeconds};
 
 pub const TIME_WINDOW: f64 = 1.0;
-pub const IDLE_TIME_GROWTH_RATE: f64 = 1.75;
+pub const IDLE_TIME_GROWTH_RATE: f64 = 1.25;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, States)]
 pub enum MainGameStates {
@@ -107,17 +107,42 @@ fn step_idle_time(
     key_count: Res<KeyCount>,
     mut idle_time: ResMut<CurrentIdleTimeSeconds>,
     mut longest_idle_time: ResMut<LongestIdleTimeSeconds>,
+    presses: Query<&KeyPress>,
     time: Res<Time>,
 ) {
     if key_count.0 > 0 {
-        let input_rate = key_count.0 as f64 * TIME_WINDOW;
-        let increment_amount = input_rate * time.delta_secs_f64();
+        // let input_rate = key_count.0 as f64 * TIME_WINDOW;
+        // let increment_amount = input_rate * time.delta_secs_f64();
+        let mut presses: Vec<&KeyPress> = presses
+            .iter()
+            .sort_by::<&KeyPress>(|val1, val2| {
+                val1.0
+                    .elapsed()
+                    .as_secs_f64()
+                    .total_cmp(&val2.0.elapsed().as_secs_f64())
+            })
+            .collect();
+        let now = KeyPress(Instant::now());
+        presses.push(&now);
+        let total_time_delta: Duration = presses
+            .windows(2)
+            .map(|presses| presses[0].0 - presses[1].0)
+            .sum();
+        let total_time_delta = total_time_delta.as_secs_f64();
+        let avg_press_time_delta = total_time_delta / presses.len() as f64;
+
+        // if avg_press_time_delta > 0.0 {
+        let avg_press_time_delta = 1.0 - avg_press_time_delta;
+        let input_rate = avg_press_time_delta;
+        // let compensater = 10.0;
+        let increment_amount = input_rate * IDLE_TIME_GROWTH_RATE * time.delta_secs_f64();
 
         **idle_time += increment_amount;
 
         if **idle_time > **longest_idle_time {
             **longest_idle_time = **idle_time;
         }
+        // }
     } else {
         let decrement_amount = time.delta_secs_f64();
 

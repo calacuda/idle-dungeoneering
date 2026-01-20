@@ -174,10 +174,10 @@ fn add_sphere(
 }
 
 fn undulate_sphere(
-    mut sphere: Single<&Mesh3d, With<UndulateSphere>>,
-    mut base_sphere: Single<&Mesh3d, With<BaseSphere>>,
+    sphere: Single<&Mesh3d, With<UndulateSphere>>,
+    base_sphere: Single<&Mesh3d, With<BaseSphere>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut noise: ResMut<PerlinWrapper>,
+    noise: Res<PerlinWrapper>,
     time: Res<Time>,
     mut zoom: ResMut<Zoom>,
     // mut timer: Single<&mut UndulateTimer>,

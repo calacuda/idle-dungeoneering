@@ -28,7 +28,7 @@ serve:
   WEBKIT_DISABLE_COMPOSITING_MODE=1 /usr/bin/dx serve --platform desktop --hot-reload true  # --hot-patch
 
 run:
-  WEBKIT_DISABLE_COMPOSITING_MODE=1 /usr/bin/dx run --platform desktop --hot-patch
+  WEBKIT_DISABLE_COMPOSITING_MODE=1 /usr/bin/dx run --platform desktop  # --hot-patch
 
 check:
   /usr/bin/dx check --platform desktop

@@ -16,13 +16,14 @@ pub mod backend;
 pub mod frontend;
 
 pub fn main() {
-    println!("{}", env!("CARGO_PKG_NAME"));
+    let filter = format!("info,{}=trace", env!("CARGO_PKG_NAME").replace("-", "_"));
+    let level = Level::INFO;
 
     let default_plugins = DefaultPlugins.set(LogPlugin {
         // Set the default log level for everything
-        level: Level::INFO,
+        level,
         // Or use a filter string for fine-grained control
-        filter: format!("info,{}=trace", env!("CARGO_PKG_NAME").replace("-", "_")),
+        filter: filter.clone(),
         ..default()
     });
 
@@ -40,5 +41,11 @@ pub fn main() {
             main_window_ui: Some(DioxusPanel::new(AppUi {})),
         })
         .add_plugins(BasePlugin)
+        .add_systems(Startup, move || {
+            warn!("default log level is: {level}");
+            warn!("default log filter: \"{filter}\"");
+        })
         .run();
 }
+
+// fn show_log_filter(log_state: Res<LogDiagnosticsState>) {}

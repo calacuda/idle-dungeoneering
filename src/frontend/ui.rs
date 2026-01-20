@@ -1,8 +1,6 @@
 use crate::backend::*;
 use bevy::ecs::entity::Entity;
-use bevy_dioxus_hooks::query::use_bevy_query;
-use bevy_dioxus_hooks::resource::hook::use_bevy_resource;
-use bevy_dioxus_interop::signals::CrossDomSignal;
+use bevy_dioxus_hooks::{query::use_bevy_query, resource::hook::use_bevy_resource};
 use bevy_dioxus_sync::panels::DioxusElementMarker;
 use dioxus::prelude::*;
 
@@ -68,25 +66,44 @@ fn progress_bar_comp(curent_time: f64, longest_time: f64) -> Element {
                 align-items: center;
                 display: flex;
                 flex-direction: row;
+                position: relative;
             ",
 
             div {
-                style: format!("
+                style: "
                     height: 100%;
-                    background-color: #a6e3a1ff;
+                    width: 100%;
+                    position: absolute;
                     text-align: left;
-                    color: #11111bff;
-                    width: {}%;
                 ",
-                    if curent_time + longest_time > 0.0 {
-                        curent_time / longest_time * 100.
-                    } else {
-                        100.0
-                    }
 
-                ),
+                div {
+                    style: format!("
+                        height: 100%;
+                        background-color: #a6e3a1ff;
+                        width: {}%;
+                        z-index: 1;
+                    ",
+                        if curent_time > 0.0 && longest_time > 0.0 {
+                            curent_time / longest_time * 100.
+                        } else {
+                            0.0
+                        }
 
-                "{curent_time:.2} sec / {longest_time:.1} sec"
+                    ),
+                }
+
+                div {
+                    style: "
+                        height: 100%;
+                        background-color: #00000000;
+                        color: #11111bff;
+                        width: auto;
+                        z-index: 2;
+                    ",
+
+                    "{curent_time:.2} sec / {longest_time:.1} sec"
+                }
             }
         }
     }
