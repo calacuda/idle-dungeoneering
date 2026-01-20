@@ -25,8 +25,7 @@ pub fn game_ui() -> Element {
         document::Stylesheet { href: asset!("src/frontend/ui.css") }
 
         main {
-            progress_bar_comp { curent_time: idle_time_res.get().map(|time| time.0).unwrap_or(0.0), longest_time: best_idle_time_res.get().map(|time| time.0).unwrap_or(0.0) }
-            // { progress_bar(idle_time_res, best_idle_time_res) }
+            progress_bar { curent_time: idle_time_res.get().map(|time| time.0).unwrap_or(0.0), longest_time: best_idle_time_res.get().map(|time| time.0).unwrap_or(0.0) }
 
             div {
                 id: "panel",
@@ -51,7 +50,7 @@ pub fn game_ui() -> Element {
 }
 
 #[component]
-fn progress_bar_comp(curent_time: f64, longest_time: f64) -> Element {
+fn progress_bar(curent_time: f64, longest_time: f64) -> Element {
     rsx! {
         div {
             style: "
