@@ -14,7 +14,7 @@ pub struct CurrentIdleTimeSeconds(pub f64);
 #[derive(Resource, Debug, Clone, PartialEq, Deref, DerefMut)]
 pub struct LongestIdleTimeSeconds(pub f64);
 
-#[derive(Resource, Debug, Clone)]
+#[derive(Resource, Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct FPS(pub f32);
 
 impl Display for FPS {

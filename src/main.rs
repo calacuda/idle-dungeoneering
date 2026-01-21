@@ -16,7 +16,11 @@ pub mod backend;
 pub mod frontend;
 
 pub fn main() {
-    let filter = format!("info,{}=trace", env!("CARGO_PKG_NAME").replace("-", "_"));
+    let filter = format!(
+        // "info,{}=trace",
+        "info,{}=trace,bevy_dioxus_hooks::query::command=error",
+        env!("CARGO_PKG_NAME").replace("-", "_")
+    );
     let level = Level::INFO;
 
     let default_plugins = DefaultPlugins.set(LogPlugin {
@@ -37,15 +41,14 @@ pub fn main() {
         .add_plugins(BevyScenePlugin)
         .add_plugins(SpherePlugin)
         .add_plugins(DioxusPlugin {
-            bevy_info_refresh_fps: 30,
+            bevy_info_refresh_fps: 25,
             main_window_ui: Some(DioxusPanel::new(AppUi {})),
         })
         .add_plugins(BasePlugin)
+        // logs log level and filters
         .add_systems(Startup, move || {
-            warn!("default log level is: {level}");
-            warn!("default log filter: \"{filter}\"");
+            info!("default log level is: {level}");
+            info!("default log filter: \"{filter}\"");
         })
         .run();
 }
-
-// fn show_log_filter(log_state: Res<LogDiagnosticsState>) {}

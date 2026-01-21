@@ -25,10 +25,10 @@ gh_watch:
   zsh -c 'gh run watch -i 1 --exit-status && echo "RUN SUCCESFUL" || gh run view --log-failed'
 
 serve:
-  WEBKIT_DISABLE_COMPOSITING_MODE=1 /usr/bin/dx serve --platform desktop --hot-reload true  # --hot-patch
+  WEBKIT_DISABLE_COMPOSITING_MODE=1 /usr/bin/dx serve --platform desktop --hot-reload true --verbose # --hot-patch
 
 run:
-  WEBKIT_DISABLE_COMPOSITING_MODE=1 /usr/bin/dx run --platform desktop  # --hot-patch
+  WEBKIT_DISABLE_COMPOSITING_MODE=1 /usr/bin/dx run --platform desktop --verbose # --hot-patch
 
 check:
   /usr/bin/dx check --platform desktop

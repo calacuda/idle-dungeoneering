@@ -11,7 +11,7 @@ use crate::backend::{
 
 pub const TIME_WINDOW: f64 = 1.0;
 pub const IDLE_TIME_GROWTH_RATE: f64 = 1.25;
-pub const IDLE_SAMPLE_WINDOW: Duration = Duration::from_mins(30);
+pub const IDLE_SAMPLE_WINDOW: Duration = Duration::from_mins(10);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Resource)]
 pub struct KeyCount(pub usize);
@@ -23,12 +23,12 @@ pub struct KeyPress(pub Instant);
 pub struct LostFocusTimestamp(pub Instant);
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Component)]
-pub struct IdleTimeSamples {
+pub struct IdleTimeSample {
     pub when: Instant,
     pub time: f64,
 }
 
-impl IdleTimeSamples {
+impl IdleTimeSample {
     pub fn new(time: f64) -> Self {
         Self {
             when: Instant::now(),
@@ -67,7 +67,8 @@ impl Plugin for IdleTimePlugin {
                     .run_if(in_state(AutomationStates::Manual))
                     .run_if(automation_timer_done),
                 (collect_idle_time_data, clean_idle_time_data)
-                    .run_if(on_timer(Duration::from_secs_f64(0.25))),
+                    .chain()
+                    .run_if(on_timer(Duration::from_secs_f64(0.75))),
             ),
         );
     }
@@ -175,13 +176,15 @@ fn start_automating(mut automation_state: ResMut<NextState<AutomationStates>>) {
 }
 
 fn collect_idle_time_data(mut cmds: Commands, idle_time: Res<CurrentIdleTimeSeconds>) {
-    cmds.spawn(IdleTimeSamples::new(idle_time.0));
+    cmds.spawn(IdleTimeSample::new(idle_time.0));
+    // debug!("spawned idle time sample: {}", idle_time.0);
 }
 
-fn clean_idle_time_data(mut cmds: Commands, data: Query<(Entity, &IdleTimeSamples)>) {
+fn clean_idle_time_data(mut cmds: Commands, data: Query<(Entity, &IdleTimeSample)>) {
     for (entity, time) in data {
         if time.when.elapsed() > IDLE_SAMPLE_WINDOW {
             cmds.entity(entity).despawn();
+            debug!("rmed idle time sample");
         }
     }
 }
