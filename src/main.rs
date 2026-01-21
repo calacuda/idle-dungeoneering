@@ -18,7 +18,8 @@ pub mod frontend;
 pub fn main() {
     let filter = format!(
         // "info,{}=trace",
-        "info,{}=trace,bevy_dioxus_hooks::query::command=error",
+        // "info,{}=trace,bevy_dioxus_hooks::query::command=error",
+        "info,{}=trace,bevy_dioxus_hooks::query::command=error,idle_dungeoneer::frontend::chart::grid=info",
         env!("CARGO_PKG_NAME").replace("-", "_")
     );
     let level = Level::INFO;

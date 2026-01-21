@@ -21,6 +21,7 @@ pub(crate) struct Axis {
     world: f32,
     grid_ticks: bool,
     label_interpolation: Option<fn(f32) -> String>,
+    #[allow(dead_code)]
     label_size: i32,
     direction: Direction,
 }
@@ -96,6 +97,7 @@ impl Axis {
         lines
     }
 
+    #[allow(dead_code)]
     pub fn tick_centers(&self) -> Vec<Point> {
         let mut points = Vec::<Point>::new();
 
@@ -124,6 +126,7 @@ impl Axis {
         }
     }
 
+    #[allow(dead_code)]
     pub fn centered_text_rects(&self, n_labels: i32) -> Vec<Rect> {
         let mut texts = Vec::<Rect>::new();
         let n_labels = self.steps.min(n_labels + 1);
@@ -258,6 +261,7 @@ impl<'a> AxisBuilder<'a> {
         self
     }
 
+    #[allow(dead_code)]
     pub fn with_stacked_series(mut self, stacked: bool) -> Self {
         self.stacked_series = stacked;
         self
@@ -268,6 +272,7 @@ impl<'a> AxisBuilder<'a> {
         self
     }
 
+    #[allow(dead_code)]
     pub fn with_label_size(mut self, size: i32) -> Self {
         self.label_size = size;
         self
@@ -288,6 +293,7 @@ impl<'a> AxisBuilder<'a> {
         self
     }
 
+    #[allow(dead_code)]
     pub fn with_centered_labels(mut self, labels: Option<&'a Labels>) -> Self {
         self.labels = labels;
         self.labels_centered = true;

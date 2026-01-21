@@ -1,5 +1,6 @@
 use super::types::Point;
 
+#[allow(dead_code)]
 pub(crate) fn polar_to_cartesian(c: Point, radius: f32, angle_degrees: f32) -> Point {
     let angle_radians = (angle_degrees - 90.0).to_radians();
     Point {
@@ -8,6 +9,7 @@ pub(crate) fn polar_to_cartesian(c: Point, radius: f32, angle_degrees: f32) -> P
     }
 }
 
+#[allow(dead_code)]
 pub(crate) fn normalize_series(series: &[f32]) -> Vec<f32> {
     let r = series.iter().copied().reduce(f32::max).unwrap() / 100.0;
     series.iter().map(|v| v / r).collect()

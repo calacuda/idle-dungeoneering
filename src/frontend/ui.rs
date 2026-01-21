@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ops::Deref, sync::Arc};
+use std::ops::Deref;
 
 use crate::{
     backend::{
@@ -7,11 +7,7 @@ use crate::{
     },
     frontend::line::LineChart,
 };
-use bevy::ecs::entity::Entity;
-use bevy_dioxus_hooks::{
-    query::{command::DioxusClone, use_bevy_query},
-    resource::hook::use_bevy_resource,
-};
+use bevy_dioxus_hooks::resource::hook::use_bevy_resource;
 use bevy_dioxus_sync::panels::DioxusElementMarker;
 use dioxus::prelude::*;
 
