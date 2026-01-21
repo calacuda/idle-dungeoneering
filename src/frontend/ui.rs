@@ -107,6 +107,7 @@ fn idle_time_graph(
                 width: "100%",
                 height: "100%",
                 max_ticks: 8,
+                // TODO: replace with window size measuermenets
                 viewbox_width: 1920 / 4,
                 viewbox_height: 1080 / 8,
                 padding_top: 0,
