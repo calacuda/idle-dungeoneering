@@ -30,5 +30,8 @@ serve:
 run:
   WEBKIT_DISABLE_COMPOSITING_MODE=1 /usr/bin/dx run --platform desktop --verbose # --hot-patch
 
+release-run:
+  WEBKIT_DISABLE_COMPOSITING_MODE=1 /usr/bin/dx run --platform desktop --verbose --release
+
 check:
   /usr/bin/dx check --platform desktop

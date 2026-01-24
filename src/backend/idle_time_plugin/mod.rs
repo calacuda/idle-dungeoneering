@@ -1,21 +1,26 @@
 use std::time::{Duration, Instant};
 
 use bevy::{
-    input::keyboard::KeyboardInput, prelude::*, time::common_conditions::on_timer,
-    window::WindowFocused,
+    input::{keyboard::KeyboardInput, mouse::MouseButtonInput},
+    prelude::*,
+    time::common_conditions::on_timer,
+    window::{WindowFocused, WindowResized},
 };
 
 use crate::backend::{
-    CurrentIdleTimeSeconds, LongestIdleTimeSeconds, base_plugin::AutomationStates,
+    AutomationSpeed, CurrentIdleTimeSeconds, LongestIdleTimeSeconds, base_plugin::AutomationStates,
 };
 
 pub const TIME_WINDOW: f64 = 1.0;
 pub const IDLE_TIME_GROWTH_RATE: f64 = 1.25;
+pub const AUTOMATION_SPEED_GROWTH_RATE: f64 = 1.25;
 pub const IDLE_SAMPLE_WINDOW: Duration = Duration::from_mins(10);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Resource)]
 pub struct KeyCount(pub usize);
 
+// NOTE: consider changing to be more generic and allow for weighting of the input. ie. value mouse
+// input or battle order change events more then key-presses.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Component)]
 pub struct KeyPress(pub Instant);
 
@@ -26,6 +31,12 @@ pub struct LostFocusTimestamp(pub Instant);
 pub struct IdleTimeSample {
     pub when: Instant,
     pub time: f64,
+}
+
+#[derive(Default, Debug, Clone, Copy, PartialEq, PartialOrd, Resource)]
+pub struct WResolution {
+    pub w: f32,
+    pub h: f32,
 }
 
 impl IdleTimeSample {
@@ -52,14 +63,23 @@ pub struct IdleTimePlugin;
 impl Plugin for IdleTimePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<KeyCount>();
+        app.init_resource::<WResolution>();
+        app.init_resource::<AutomationSpeed>();
         app.add_systems(
             Update,
             (
                 (
-                    gather_kbd_input.run_if(on_message::<KeyboardInput>),
+                    (
+                        gather_kbd_input.run_if(on_message::<KeyboardInput>),
+                        gather_mouse_input.run_if(on_message::<MouseButtonInput>),
+                    ),
                     // gather_mouse_input.run_if(on_message::<MouseButtonInput>),
                     step_inputs,
-                    step_idle_time,
+                    (
+                        step_idle_time,
+                        step_automation_speed
+                            .run_if(on_timer(Duration::from_secs_f64(TIME_WINDOW * 0.5))),
+                    ),
                 )
                     .chain(),
                 step_automating_timer,
@@ -69,6 +89,7 @@ impl Plugin for IdleTimePlugin {
                 (collect_idle_time_data, clean_idle_time_data)
                     .chain()
                     .run_if(on_timer(Duration::from_secs_f64(0.75))),
+                update_window_size.run_if(on_message::<WindowResized>),
             ),
         );
     }
@@ -76,6 +97,12 @@ impl Plugin for IdleTimePlugin {
 
 fn gather_kbd_input(mut cmds: Commands, mut keyboard_inputs: MessageReader<KeyboardInput>) {
     for _input in keyboard_inputs.read() {
+        cmds.spawn(KeyPress(Instant::now()));
+    }
+}
+
+fn gather_mouse_input(mut cmds: Commands, mut mouse_inputs: MessageReader<MouseButtonInput>) {
+    for _input in mouse_inputs.read() {
         cmds.spawn(KeyPress(Instant::now()));
     }
 }
@@ -150,6 +177,16 @@ fn step_idle_time(
     }
 }
 
+fn step_automation_speed(key_count: Res<KeyCount>, mut automation_speed: ResMut<AutomationSpeed>) {
+    if key_count.0 > 0 {
+        let increment_amount = key_count.0 as f64 / TIME_WINDOW * AUTOMATION_SPEED_GROWTH_RATE;
+
+        automation_speed.0 = increment_amount;
+
+        // info!("automation_speed: {}", **automation_speed);
+    }
+}
+
 fn step_automating_timer(
     mut cmds: Commands,
     mut events: MessageReader<WindowFocused>,
@@ -186,5 +223,23 @@ fn clean_idle_time_data(mut cmds: Commands, data: Query<(Entity, &IdleTimeSample
             cmds.entity(entity).despawn();
             debug!("rmed idle time sample");
         }
+    }
+}
+
+/// This system shows how to respond to a window being resized.
+fn update_window_size(
+    mut resize_events: MessageReader<WindowResized>,
+    mut window_size: ResMut<WResolution>,
+) {
+    for event in resize_events.read() {
+        // Log the new width and height of the window that was resized
+        debug!(
+            "Window resized to: width = {}, height = {} (Window ID: {})",
+            event.width, event.height, event.window
+        );
+
+        // update window_size for front end.
+        window_size.w = event.width;
+        window_size.h = event.height;
     }
 }

@@ -42,7 +42,7 @@ pub fn main() {
         .add_plugins(BevyScenePlugin)
         .add_plugins(SpherePlugin)
         .add_plugins(DioxusPlugin {
-            bevy_info_refresh_fps: 25,
+            bevy_info_refresh_fps: 60,
             main_window_ui: Some(DioxusPanel::new(AppUi {})),
         })
         .add_plugins(BasePlugin)
