@@ -26,32 +26,30 @@ pub struct BevyScenePlugin;
 impl Plugin for BevyScenePlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(FPS(0.0));
-        app.add_systems(Startup, setup);
+        // app.add_systems(Startup, setup);
         // app.insert_resource(CurrentIdleTimeSeconds(25.125));
         // app.insert_resource(LongestIdleTimeSeconds(30.0));
-        app.insert_resource(CurrentIdleTimeSeconds(0.0));
-        app.insert_resource(LongestIdleTimeSeconds(0.0));
         app.add_systems(Update, sync_with_ui);
         // app.add_systems(Update, sync_with_ui_2);
     }
 }
 
-fn setup(
-    mut commands: Commands,
-    //     mut meshes: ResMut<Assets<Mesh>>,
-    //     mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    // commands.spawn((IdleTimeSeconds(25.125), CurrentIdleTime));
-    // commands.spawn((IdleTimeSeconds(30.0), BestIdleTime));
-    commands.spawn(TestComponent(0));
-    commands.spawn(TestComponent(1));
-    commands.spawn(TestComponent(2));
-    commands.spawn(TestComponent(3));
-    commands.spawn(TestComponent(4));
-    commands.spawn(TestComponent(5));
-    commands.spawn(TestComponent(6));
-    commands.spawn(TestComponent(7));
-}
+// fn setup(
+//     mut commands: Commands,
+//     //     mut meshes: ResMut<Assets<Mesh>>,
+//     //     mut materials: ResMut<Assets<StandardMaterial>>,
+// ) {
+//     // commands.spawn((IdleTimeSeconds(25.125), CurrentIdleTime));
+//     // commands.spawn((IdleTimeSeconds(30.0), BestIdleTime));
+//     commands.spawn(TestComponent(0));
+//     commands.spawn(TestComponent(1));
+//     commands.spawn(TestComponent(2));
+//     commands.spawn(TestComponent(3));
+//     commands.spawn(TestComponent(4));
+//     commands.spawn(TestComponent(5));
+//     commands.spawn(TestComponent(6));
+//     commands.spawn(TestComponent(7));
+// }
 
 fn sync_with_ui(mut fps: ResMut<FPS>, time: Res<Time>) {
     let new_fps = 1000.0 / time.delta().as_millis() as f32;

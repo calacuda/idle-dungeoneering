@@ -6,6 +6,7 @@ use bevy::{
     time::common_conditions::on_timer,
     window::{WindowFocused, WindowResized},
 };
+use crossbeam::channel::{Receiver, Sender};
 
 use crate::backend::{
     AutomationSpeed, CurrentIdleTimeSeconds, LongestIdleTimeSeconds, base_plugin::AutomationStates,
@@ -14,7 +15,7 @@ use crate::backend::{
 pub const TIME_WINDOW: f64 = 1.0;
 pub const IDLE_TIME_GROWTH_RATE: f64 = 1.25;
 pub const AUTOMATION_SPEED_GROWTH_RATE: f64 = 1.25;
-pub const IDLE_SAMPLE_WINDOW: Duration = Duration::from_mins(10);
+pub const IDLE_SAMPLE_WINDOW: Duration = Duration::from_mins(1);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Resource)]
 pub struct KeyCount(pub usize);
@@ -33,6 +34,30 @@ pub struct IdleTimeSample {
     pub time: f64,
 }
 
+impl From<f64> for IdleTimeSample {
+    fn from(value: f64) -> Self {
+        Self::new(value)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Component)]
+pub struct AutomationSpeedSample {
+    pub when: Instant,
+    pub time: f64,
+}
+
+impl From<f64> for AutomationSpeedSample {
+    fn from(value: f64) -> Self {
+        Self::new(value)
+    }
+}
+
+#[derive(Resource, Debug, Clone, Deref, DerefMut)]
+pub struct IdleTimeTx(pub Sender<IdleTimeSample>);
+
+#[derive(Resource, Debug, Clone, Deref, DerefMut)]
+pub struct AutomationSpeedTx(pub Sender<AutomationSpeedSample>);
+
 #[derive(Default, Debug, Clone, Copy, PartialEq, PartialOrd, Resource)]
 pub struct WResolution {
     pub w: f32,
@@ -40,6 +65,15 @@ pub struct WResolution {
 }
 
 impl IdleTimeSample {
+    pub fn new(time: f64) -> Self {
+        Self {
+            when: Instant::now(),
+            time,
+        }
+    }
+}
+
+impl AutomationSpeedSample {
     pub fn new(time: f64) -> Self {
         Self {
             when: Instant::now(),
@@ -58,13 +92,20 @@ fn automation_timer_done(last_lost_focus: Single<Option<&LostFocusTimestamp>>) -
         .is_some_and(|focus_timer| focus_timer.0.elapsed() > Duration::from_secs_f64(2.0))
 }
 
-pub struct IdleTimePlugin;
+pub struct IdleTimePlugin {
+    pub idle_tx: Sender<IdleTimeSample>,
+    pub speed_tx: Sender<AutomationSpeedSample>,
+}
 
 impl Plugin for IdleTimePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<KeyCount>();
         app.init_resource::<WResolution>();
         app.init_resource::<AutomationSpeed>();
+        app.insert_resource(CurrentIdleTimeSeconds(0.0));
+        app.insert_resource(LongestIdleTimeSeconds(0.0));
+        app.insert_resource(IdleTimeTx(self.idle_tx.clone()));
+        app.insert_resource(AutomationSpeedTx(self.speed_tx.clone()));
         app.add_systems(
             Update,
             (
@@ -77,8 +118,17 @@ impl Plugin for IdleTimePlugin {
                     step_inputs,
                     (
                         step_idle_time,
-                        step_automation_speed
-                            .run_if(on_timer(Duration::from_secs_f64(TIME_WINDOW * 0.5))),
+                        step_automation_speed,
+                        // send_idle_time.run_if(on_timer(Duration::from_secs_f64(TIME_WINDOW * 0.5))),
+                        (
+                            send_time_sample::<CurrentIdleTimeSeconds, IdleTimeTx, IdleTimeSample>,
+                            send_time_sample::<
+                                AutomationSpeed,
+                                AutomationSpeedTx,
+                                AutomationSpeedSample,
+                            >,
+                        )
+                            .run_if(on_timer(Duration::from_secs_f64(TIME_WINDOW * 0.25))),
                     ),
                 )
                     .chain(),
@@ -143,6 +193,7 @@ fn step_idle_time(
                     .elapsed()
                     .as_secs_f64()
                     .total_cmp(&val2.0.elapsed().as_secs_f64())
+                    .then(std::cmp::Ordering::Less)
             })
             .collect();
         let now = KeyPress(Instant::now());
@@ -187,6 +238,28 @@ fn step_automation_speed(key_count: Res<KeyCount>, mut automation_speed: ResMut<
     }
 }
 
+// fn send_idle_time(idle_time: Res<CurrentIdleTimeSeconds>, time_sender: Res<IdleTimeTx>) {
+//     if let Err(e) = time_sender.send(IdleTimeSample::new(idle_time.0)) {
+//         error!("{e}");
+//     } else {
+//         info!("sent time, {} time samples in queue.", time_sender.len());
+//     }
+// }
+
+fn send_time_sample<C, T, S>(curent_time: Res<C>, time_sender: Res<T>)
+where
+    C: Resource + std::ops::Deref<Target = f64>,
+    T: Resource + std::ops::Deref<Target = Sender<S>>,
+    S: From<f64>,
+{
+    if let Err(e) = time_sender.send(S::from(*curent_time.deref())) {
+        error!("{e}");
+    }
+    // else {
+    //     info!("sent time, {} time samples in queue.", time_sender.len());
+    // }
+}
+
 fn step_automating_timer(
     mut cmds: Commands,
     mut events: MessageReader<WindowFocused>,
@@ -221,7 +294,7 @@ fn clean_idle_time_data(mut cmds: Commands, data: Query<(Entity, &IdleTimeSample
     for (entity, time) in data {
         if time.when.elapsed() > IDLE_SAMPLE_WINDOW {
             cmds.entity(entity).despawn();
-            debug!("rmed idle time sample");
+            // debug!("rmed idle time sample");
         }
     }
 }

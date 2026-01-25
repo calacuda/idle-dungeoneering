@@ -44,5 +44,5 @@ impl Display for AutomationSpeed {
     }
 }
 
-#[derive(Component, Debug, Clone, Deref, DerefMut)]
-pub struct TestComponent(pub usize);
+// #[derive(Component, Debug, Clone, Deref, DerefMut)]
+// pub struct TestComponent(pub usize);

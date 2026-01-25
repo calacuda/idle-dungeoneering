@@ -6,9 +6,13 @@ use bevy::{
     prelude::*,
 };
 use bevy_dioxus_sync::{panels::DioxusPanel, plugins::DioxusPlugin};
+use crossbeam::channel::unbounded;
 
 use crate::{
-    backend::{base_plugin::BasePlugin, bevy_scene_plugin::BevyScenePlugin, sphere::SpherePlugin},
+    backend::{
+        base_plugin::BasePlugin, bevy_scene_plugin::BevyScenePlugin,
+        idle_time_plugin::IdleTimePlugin, sphere::SpherePlugin,
+    },
     frontend::AppUi,
 };
 
@@ -37,15 +41,22 @@ pub fn main() {
         .disable::<bevy::window::WindowPlugin>()
         .disable::<bevy::render::RenderPlugin>();
 
+    let (idle_tx, idle_rx) = unbounded();
+    let (speed_tx, speed_rx) = unbounded();
+
     App::new()
         .add_plugins((default_plugins, FrameTimeDiagnosticsPlugin::default()))
         .add_plugins(BevyScenePlugin)
         .add_plugins(SpherePlugin)
         .add_plugins(DioxusPlugin {
-            bevy_info_refresh_fps: 60,
-            main_window_ui: Some(DioxusPanel::new(AppUi {})),
+            bevy_info_refresh_fps: 30,
+            main_window_ui: Some(DioxusPanel::new(AppUi {
+                idle_time: idle_rx,
+                automation_speed: speed_rx,
+            })),
         })
         .add_plugins(BasePlugin)
+        .add_plugins(IdleTimePlugin { idle_tx, speed_tx })
         // logs log level and filters
         .add_systems(Startup, move || {
             info!("default log level is: {level}");

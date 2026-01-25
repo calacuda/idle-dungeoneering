@@ -29,7 +29,7 @@ impl Plugin for BasePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<MainGameStates>();
         app.init_state::<AutomationStates>();
-        app.add_plugins(IdleTimePlugin);
+        // app.add_plugins(IdleTimePlugin);
         app.add_systems(Startup, |mut cmds: Commands| {
             cmds.insert_resource(StartTime(Instant::now()))
         });
