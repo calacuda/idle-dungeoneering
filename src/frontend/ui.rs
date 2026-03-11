@@ -118,7 +118,7 @@ pub fn game_ui(
                     height: 100%;
                     ",
 
-                    // TODO: battle skill order.
+                    // battle skill order.
                     div {
                         style: "
                         display: flex;
@@ -133,7 +133,7 @@ pub fn game_ui(
 
                     }
 
-                    // TODO: known battle skills.
+                    // known battle skills.
                     div {
                         style: "
                         display: grid;

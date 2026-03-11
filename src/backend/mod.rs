@@ -4,8 +4,9 @@ use bevy::ecs::prelude::*;
 use bevy::prelude::{Deref, DerefMut};
 
 pub mod base_plugin;
-pub mod bevy_scene_plugin;
+pub mod fps_tracking_plugin;
 pub mod idle_time_plugin;
+pub mod player_plugin;
 pub mod sphere;
 
 #[derive(Resource, Debug, Clone, PartialEq, Deref, DerefMut)]

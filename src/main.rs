@@ -10,8 +10,8 @@ use crossbeam::channel::unbounded;
 
 use crate::{
     backend::{
-        base_plugin::BasePlugin, bevy_scene_plugin::BevyScenePlugin,
-        idle_time_plugin::IdleTimePlugin, sphere::SpherePlugin,
+        base_plugin::BasePlugin, fps_tracking_plugin::FpsTrackingPlugin,
+        idle_time_plugin::IdleTimePlugin, player_plugin::PlayerPlugin, sphere::SpherePlugin,
     },
     frontend::AppUi,
 };
@@ -46,7 +46,7 @@ pub fn main() {
 
     App::new()
         .add_plugins((default_plugins, FrameTimeDiagnosticsPlugin::default()))
-        .add_plugins(BevyScenePlugin)
+        .add_plugins(FpsTrackingPlugin)
         .add_plugins(SpherePlugin)
         .add_plugins(DioxusPlugin {
             bevy_info_refresh_fps: 30,
@@ -57,6 +57,7 @@ pub fn main() {
         })
         .add_plugins(BasePlugin)
         .add_plugins(IdleTimePlugin { idle_tx, speed_tx })
+        .add_plugins(PlayerPlugin)
         // logs log level and filters
         .add_systems(Startup, move || {
             info!("default log level is: {level}");
